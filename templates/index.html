@@ -1,0 +1,23 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h2>Our Menu</h2>
+<div class="menu-grid">
+    {% for item in menu %}
+    <div class="menu-card">
+        <div>
+            <h3>{{ item.name }}</h3>
+            <p class="desc">{{ item.description }}</p>
+            <p class="price">₹{{ "%.2f"|format(item.price) }}</p>
+        </div>
+        <form class="add-form" action="{{ url_for('add_to_cart') }}" method="POST">
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+            <input type="hidden" name="name" value="{{ item.name }}">
+            <input type="hidden" name="price" value="{{ item.price }}">
+            <input type="number" name="qty" value="1" min="1">
+            <button type="submit" class="btn">Add to Cart</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

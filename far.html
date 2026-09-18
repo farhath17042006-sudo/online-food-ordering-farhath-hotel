@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Farhath Hotel — Online Ordering</title>
+<style>
+  :root{--primary:#1e3c72;--accent:#2a5298;--muted:#6b7280}
+  *{box-sizing:border-box}
+  body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial; margin:0; background:#f3f6fb; color:#111}
+  header{background:linear-gradient(90deg,var(--primary),var(--accent)); color:#fff; padding:18px 24px}
+  header h1{margin:0;font-size:20px;letter-spacing:0.2px}
+  .wrap{max-width:1100px;margin:24px auto;padding:0 18px;display:grid;grid-template-columns:1fr 380px;gap:20px}
+  .card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(20,20,50,0.06)}
+  h2{margin:0 0 12px 0;font-size:18px}
+
+  /* Menu list */
+  .menu-item{display:flex;align-items:center;justify-content:space-between;padding:12px 8px;border-radius:8px;border:1px solid #f0f2f6;margin-bottom:10px}
+  .menu-left{display:flex;gap:12px;align-items:center}
+  .name{font-weight:600}
+  .desc{color:var(--muted);font-size:13px}
+  .price{font-weight:700;color:var(--accent)}
+  .controls{display:flex;gap:8px;align-items:center}
+  input[type='number']{width:64px;padding:6px;border-radius:8px;border:1px solid #e6e9ef}
+  button.btn{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #e6e9ef;color:#333}
+
+  /* Right column cart */
+  .cart-item{display:flex;justify-content:space-between;padding:10px 6px;border-bottom:1px dashed #eef2f7}
+  .small{font-size:13px;color:var(--muted)}
+  .total-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+  .checkout-row{display:flex;gap:8px;margin-top:12px}
+
+  /* responsive */
+  @media (max-width:900px){.wrap{grid-template-columns:1fr;}.card{padding:12px}}
+</style>
+</head>
+<body>
+<header><div style="max-width:1100px;margin:0 auto;padding:0 18px"><h1>Farhath Hotel — Online Ordering</h1></div></header>
+
+<div class="wrap">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2>Menu</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="search" placeholder="Search menu..." style="padding:8px;border-radius:8px;border:1px solid #e6e9ef" />
+        <button class="ghost" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div id="menuList" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Your Cart</h2>
+    <div id="cartList"></div>
+
+    <div class="total-row">
+      <div class="small">Subtotal</div>
+      <div id="subtotal">₹0.00</div>
+    </div>
+    <div class="total-row"><div class="small">GST (5%)</div><div id="gst">₹0.00</div></div>
+    <div class="total-row"><div class="small">Discount</div><div id="discount">₹0.00</div></div>
+    <div class="total-row" style="margin-top:8px;font-weight:700;font-size:16px"><div>Total</div><div id="grand">₹0.00</div></div>
+
+    <div class="checkout-row">
+      <input id="custName" placeholder="Customer name (optional)" style="flex:1;padding:8px;border-radius:8px;border:1px solid #e6e9ef" />
+      <input id="discountCode" placeholder="Discount code" style="width:130px;padding:8px;border-radius:8px;border:1px solid #e6e9ef" />
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" id="printBtn">Print Bill</button>
+      <button class="ghost" id="clearCart">Clear Cart</button>
+    </div>
+
+    <div style="margin-top:12px;font-size:13px;color:var(--muted)">Discount code: <b>FIRST10</b> gives 10% off. GST: 5%.</div>
+  </div>
+</div>
+
+<!-- Printable bill template (hidden) -->
+<template id="billTemplate">
+  <div style="font-family:Arial,Helvetica,sans-serif;padding:18px;">
+    <h2 style="text-align:center;margin:0">farhath hotel</h2>
+    <div style="text-align:center;color:#666;margin-bottom:8px">Bill</div>
+    <div style="margin-bottom:12px">Customer: {{customer}}<br/>Date: {{date}}</div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr><th style="border-bottom:1px solid #ddd;text-align:left;padding:6px">Item</th><th style="border-bottom:1px solid #ddd;padding:6px;text-align:right">Qty</th><th style="border-bottom:1px solid #ddd;padding:6px;text-align:right">Price</th><th style="border-bottom:1px solid #ddd;padding:6px;text-align:right">Total</th></tr>
+      </thead>
+      <tbody>{{rows}}</tbody>
+    </table>
+    <div style="margin-top:10px;text-align:right">
+      <div>Subtotal: ₹{{subtotal}}</div>
+      <div>GST (5%): ₹{{gst}}</div>
+      <div>Discount: -₹{{discount}}</div>
+      <div style="font-weight:700;margin-top:6px">TOTAL: ₹{{grand}}</div>
+    </div>
+  </div>
+</template>
+
+<script>
+// Data
+const MENU = [
+  {id:1,name:'Margherita Pizza',price:200,desc:'Classic cheese pizza',category:'Main'},
+  {id:2,name:'Chicken Biryani',price:250,desc:'Spicy chicken biryani',category:'Main'},
+  {id:3,name:'Paneer Butter Masala',price:180,desc:'Creamy paneer curry',category:'Main'},
+  {id:4,name:'Veg Fried Rice',price:120,desc:'Mixed vegetables and rice',category:'Main'},
+  {id:5,name:'French Fries',price:80,desc:'Crispy potato fries',category:'Starters'},
+  {id:6,name:'Masala Dosa',price:90,desc:'Crispy dosa with potato masala',category:'Main'},
+  {id:7,name:'Cold Coffee',price:70,desc:'Iced coffee with milk',category:'Drinks'}
+];
+
+let cart = [];
+const GST_RATE = 0.05;
+const DISCOUNTS = { 'FIRST10': 0.10 };
+
+// Render menu
+function renderMenu(filter=''){
+  const el = document.getElementById('menuList'); el.innerHTML = '';
+  MENU.filter(it => (it.name+it.desc+it.category).toLowerCase().includes(filter.toLowerCase())).forEach(it => {
+    const div = document.createElement('div'); div.className='menu-item';
+    div.innerHTML = `
+      <div class="menu-left">
+        <div>
+          <div class="name">${it.name}</div>
+          <div class="desc">${it.desc}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="price">₹${it.price}</div>
+        <div class="controls">
+          <input type="number" min="1" value="1" id="qty_${it.id}" />
+          <button class="btn" onclick="addToCart(${it.id})">Add</button>
+        </div>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+function addToCart(id){
+  const qty = parseInt(document.getElementById('qty_'+id).value) || 1;
+  const item = MENU.find(x=>x.id===id);
+  const existing = cart.find(c=>c.id===id);
+  if(existing) existing.qty += qty; else cart.push({id:item.id,name:item.name,price:item.price,qty});
+  renderCart();
+}
+
+function renderCart(){
+  const el = document.getElementById('cartList'); el.innerHTML = '';
+  let subtotal = 0;
+  if(cart.length===0){ el.innerHTML = '<div class="small">Cart is empty</div>'; }
+  cart.forEach(c=>{
+    const row = document.createElement('div'); row.className='cart-item';
+    row.innerHTML = `<div style="display:flex;flex-direction:column"><div>${c.name}</div><div class='small'>₹${c.price} each</div></div><div style='display:flex;gap:8px;align-items:center'><button class='ghost' onclick='decQty(${c.id})'>-</button><div>${c.qty}</div><button class='ghost' onclick='incQty(${c.id})'>+</button><div style='width:18px'></div><div>₹${(c.price*c.qty).toFixed(2)}</div></div>`;
+    el.appendChild(row);
+    subtotal += c.price * c.qty;
+  });
+  const gst = subtotal * GST_RATE;
+  const discCode = document.getElementById('discountCode').value.trim().toUpperCase();
+  const discount = DISCOUNTS[discCode] ? subtotal * DISCOUNTS[discCode] : 0;
+  const grand = subtotal + gst - discount;
+  document.getElementById('subtotal').innerText = '₹' + subtotal.toFixed(2);
+  document.getElementById('gst').innerText = '₹' + gst.toFixed(2);
+  document.getElementById('discount').innerText = '₹' + discount.toFixed(2);
+  document.getElementById('grand').innerText = '₹' + grand.toFixed(2);
+}
+
+function incQty(id){ const it = cart.find(c=>c.id===id); if(it){ it.qty++; renderCart(); } }
+function decQty(id){ const it = cart.find(c=>c.id===id); if(it){ it.qty = Math.max(1,it.qty-1); renderCart(); } }
+
+function clearCart(){ cart = []; renderCart(); }
+
+document.getElementById('clearCart').addEventListener('click', clearCart);
+document.getElementById('search').addEventListener('input', e=> renderMenu(e.target.value));
+document.getElementById('resetBtn').addEventListener('click', ()=>{document.getElementById('search').value=''; renderMenu();});
+
+// Print bill
+function buildBillHtml(){
+  const customer = document.getElementById('custName').value.trim() || 'Walk-in Customer';
+  const date = new Date().toLocaleString();
+  let rows = '';
+  let subtotal = 0;
+  cart.forEach(c=>{ rows += `<tr><td style="padding:6px;border-bottom:1px solid #eee">${c.name}</td><td style="padding:6px;text-align:right;border-bottom:1px solid #eee">${c.qty}</td><td style="padding:6px;text-align:right;border-bottom:1px solid #eee">₹${c.price.toFixed(2)}</td><td style="padding:6px;text-align:right;border-bottom:1px solid #eee">₹${(c.price*c.qty).toFixed(2)}</td></tr>`; subtotal += c.price*c.qty; });
+  const gst = subtotal * GST_RATE;
+  const discCode = document.getElementById('discountCode').value.trim().toUpperCase();
+  const discount = DISCOUNTS[discCode] ? subtotal * DISCOUNTS[discCode] : 0;
+  const grand = subtotal + gst - discount;
+  const tpl = document.getElementById('billTemplate').innerHTML
+    .replace('{{customer}}', customer)
+    .replace('{{date}}', date)
+    .replace('{{rows}}', rows)
+    .replace('{{subtotal}}', subtotal.toFixed(2))
+    .replace('{{gst}}', gst.toFixed(2))
+    .replace('{{discount}}', discount.toFixed(2))
+    .replace('{{grand}}', grand.toFixed(2));
+  return tpl;
+}
+
+function printBill(){
+  if(cart.length===0){ alert('Cart is empty'); return; }
+  const billHtml = buildBillHtml();
+  const w = window.open('','_blank');
+  w.document.write(`<!doctype html><html><head><title>Bill - farhath hotel</title><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:Arial;padding:18px}</style></head><body>${billHtml}</body></html>`);
+  w.document.close();
+  w.focus();
+  // slight delay to ensure content renders before print
+  setTimeout(()=>{ w.print(); /* w.close(); */ }, 500);
+}
+
+// connect print button
+document.getElementById('printBtn').addEventListener('click', printBill);
+
+// initialize
+renderMenu(); renderCart();
+</script>
+</body>
+</html>
+

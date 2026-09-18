@@ -1,0 +1,16 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<div class="checkout-box">
+    <h2>Checkout</h2>
+    <p>Total Amount: <strong>₹{{ "%.2f"|format(total) }}</strong></p>
+    
+    <form action="{{ url_for('checkout') }}" method="POST">
+        <div>
+            <label for="customer_name">Customer Name:</label><br>
+            <input type="text" id="customer_name" name="customer_name" placeholder="Walk-in Customer" style="width: 100%;">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; font-size: 1.2rem;">Confirm Order</button>
+    </form>
+</div>
+{% endblock %}

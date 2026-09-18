@@ -1,0 +1,44 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h2>Your Cart</h2>
+{% if cart %}
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item_id, item in cart.items() %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>₹{{ "%.2f"|format(item.price) }}</td>
+                <td>{{ item.qty }}</td>
+                <td>₹{{ "%.2f"|format(item.price * item.qty) }}</td>
+                <td>
+                    <form action="{{ url_for('update_cart') }}" method="POST" class="cart-actions">
+                        <input type="hidden" name="item_id" value="{{ item_id }}">
+                        <button type="submit" name="action" value="decrease" class="btn">-</button>
+                        <button type="submit" name="action" value="increase" class="btn">+</button>
+                        <button type="submit" name="action" value="remove" class="btn btn-danger">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="total-row">
+        Grand Total: ₹{{ "%.2f"|format(total) }}
+    </div>
+    <div style="text-align: right; margin-top: 1rem;">
+        <a href="{{ url_for('checkout') }}" class="btn btn-primary" style="font-size: 1.2rem; padding: 1rem 2rem;">Proceed to Checkout</a>
+    </div>
+{% else %}
+    <p>Your cart is empty. <a href="{{ url_for('index') }}">Browse Menu</a></p>
+{% endif %}
+{% endblock %}

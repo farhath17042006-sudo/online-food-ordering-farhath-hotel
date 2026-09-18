@@ -1,0 +1,36 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<div class="receipt-box">
+    <h2 style="text-align: center; color: var(--primary);">{{ hotel_name }}</h2>
+    <p style="text-align: center;">Order Receipt</p>
+    <hr>
+    <p><strong>Order ID:</strong> #{{ order.id }}</p>
+    <p><strong>Date:</strong> {{ order.date }}</p>
+    <p><strong>Customer:</strong> {{ order.customer }}</p>
+    <hr>
+    <table style="margin-bottom: 1rem;">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th style="text-align: right;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item_id, item in order['items'].items() %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>x{{ item.qty }}</td>
+                <td style="text-align: right;">₹{{ "%.2f"|format(item.price * item.qty) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h3 style="text-align: right;">TOTAL: ₹{{ "%.2f"|format(order.total) }}</h3>
+    <div style="text-align: center; margin-top: 2rem;">
+        <button onclick="window.print()" class="btn">Print Receipt</button>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Place New Order</a>
+    </div>
+</div>
+{% endblock %}

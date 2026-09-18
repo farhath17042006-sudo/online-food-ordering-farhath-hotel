@@ -1,0 +1,34 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ hotel_name }} - Online Ordering</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>{{ hotel_name }}</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Menu</a> | 
+            <a href="{{ url_for('view_cart') }}">Cart 
+                {% if cart_count is defined and cart_count > 0 %}
+                    ({{ cart_count }})
+                {% endif %}
+            </a>
+        </nav>
+    </header>
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
