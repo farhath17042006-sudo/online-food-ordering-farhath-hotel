@@ -17,3 +17,4 @@ A web-based food ordering system converted from a Tkinter desktop application.
 1. Connect this repository to Render.
 2. Build Command: `pip install -r requirements.txt`
 3. Start Command: `gunicorn app:app`
+render live link : https://online-food-ordering-farhath-hotel.onrender.com
